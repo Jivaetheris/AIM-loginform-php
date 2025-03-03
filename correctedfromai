@@ -1,0 +1,88 @@
+<?php
+include "connection.php";
+
+// Handle form submission
+if ($_SERVER["REQUEST_METHOD"] == 'POST') {
+    $firstname = trim($_POST['fname']);
+    $lastname = trim($_POST['lname']);
+    $department = trim($_POST['department']);
+    $salary = trim($_POST['salary']);
+
+    // Check if all fields are filled
+    if (!empty($firstname) && !empty($lastname) && !empty($department) && !empty($salary)) {
+        try {
+            // Prevent SQL injection
+            $firstname = $conn->real_escape_string($firstname);
+            $lastname = $conn->real_escape_string($lastname);
+            $department = $conn->real_escape_string($department);
+            $salary = $conn->real_escape_string($salary);
+
+            // Insert data
+            $insert_sql = "INSERT INTO employee (first_name, last_name, department, salary) 
+                           VALUES ('$firstname', '$lastname', '$department', '$salary')";
+            
+            if ($conn->query($insert_sql) === TRUE) {
+                echo "<script>alert('New Employee Added!');</script>";
+                echo "<script>window.location.href='" . $_SERVER['PHP_SELF'] . "';</script>";
+                exit();
+            } else {
+                throw new Exception("Error inserting data: " . $conn->error);
+            }
+        } catch (Exception $e) {
+            echo "<script>alert('".$e->getMessage()."');</script>";
+        }
+    } else {
+        echo "<script>alert('All fields are required!');</script>";
+    }
+}
+
+// Fetch employees from database
+$select_sql = "SELECT * FROM employee";
+$result = $conn->query($select_sql);
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management</title>
+</head>
+<body>
+    <h2>Insert Employee</h2>
+    <form action="" method="POST">
+        <input type="text" name="fname" placeholder="First Name" required><br>
+        <input type="text" name="lname" placeholder="Last Name" required><br>
+        <input type="text" name="department" placeholder="Department" required><br>
+        <input type="number" name="salary" placeholder="Salary" required><br><br>
+        <button type="submit" name="Insert">Insert</button>
+    </form>
+
+    <h2>Employee List</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Department</th>
+            <th>Salary</th>
+        </tr>
+
+        <?php 
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<tr>
+                        <td>{$row['id']}</td>
+                        <td>{$row['first_name']}</td>
+                        <td>{$row['last_name']}</td>
+                        <td>{$row['department']}</td>
+                        <td>{$row['salary']}</td>
+                      </tr>";
+            }
+        } else {
+            echo "<tr><td colspan='5'>No employees found.</td></tr>";
+        }
+        ?>
+    </table>
+</body>
+</html>
